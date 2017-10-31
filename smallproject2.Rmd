@@ -1,0 +1,32 @@
+---
+title: "Small Project 2"
+author: "Syaza Senin, Eungkoo (Eugene) Kahng, Miriam Hu, Youngihn Kwon"
+date: "October 31, 2017"
+output: html_document
+---
+
+```{r, include=FALSE}
+library(knitr)
+library(MASS)
+library(tidyverse)
+library(gridExtra)
+opts_chunk$set(echo = FALSE,
+               cache = TRUE, autodep = TRUE,
+               message = FALSE, warning = FALSE)
+```
+
+## Question 1
+
+```{r data-loading}
+test <- read.table("http://www.stat.ufl.edu/~winner/data/concussion.dat")
+colnames(test) <- c("gender", "sport", "year", "concussion", "count")
+```
+
+```{r}
+con1 <- subset(test, concussion == 1)
+con2 <- subset(test, concussion == 0)
+con1$count0 <- con2$count
+con1$prop <- con1$count /  (con1$count + con1$count0)
+head(con1)
+```
+
