@@ -10,6 +10,7 @@ library(knitr)
 library(MASS)
 library(tidyverse)
 library(vcd)
+library(RColorBrewer)
 opts_chunk$set(echo = FALSE,
                cache = TRUE, autodep = TRUE,
                message = FALSE, warning = FALSE)
@@ -25,13 +26,13 @@ con1 <- subset(test, concussion == 1)
 con2 <- subset(test, concussion == 0)
 con1$count0 <- con2$count
 con1$prop <- con1$count /  (con1$count + con1$count0)
-con1$prop0 <- con1$count0 /  (con1$count + con1$count0)
 
-aggregate(count ~ concussion, test, sum)
+total.count <- aggregate(count ~ concussion, test, sum)
 ```
 
 
 #### i)
+
 
 ```{r logit-reg, fig.align = "center"}
 test.logit <- glm(cbind(count, count0) ~ gender + sport + factor(year), 
@@ -53,6 +54,8 @@ ggplot(test.fit.long, aes(x = f.value, y = value)) + geom_point() +
   facet_wrap(~type) + ggtitle("Residual vs Fitted Graph")
 ```
 
+We are not adding any interaction because sports and gender interaction still gives you the straightish line for fitted plots. Plus, we believe sports themselves soley determine the injury issues no matter gender. In terms of the residual and fitted, the loess fitting is doing a good job capturing the residual pattern which does not seem to deviate much from 0.
+
 
 #### ii)
 
@@ -67,12 +70,11 @@ null.test.logit <- glm(cbind(count, count0) ~ 1, family = binomial(link='logit')
 #### i)
 
 ```{r count-plots, fig.align = "center"}
-ggplot(test, aes(x = sport, y = count)) + geom_bar(stat = "identity") +
-  facet_wrap(~gender + year)
+ggplot(test, aes(x = sport, y = count, fill = gender)) + geom_bar(stat = "identity") +
+  facet_wrap(~year) + xlab("Sports") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 test.table <- xtabs(count ~ gender + sport + year, data = test)
-mosaic(~gender + sport, test.table)
-mosaic(~year + sport, test.table)
+mosaic(~year + sport + gender, test.table, highlighting="year", highlighting_fill = brewer.pal(3, "Set3"))
 ```
 
 
@@ -80,20 +82,28 @@ mosaic(~year + sport, test.table)
 
 ##### (a)
 
-```{r poisson, fig.align = "center"}
+```{r poisson-data}
 test.new <- test[test$concussion == 1, ]
-mean(test.new$count)
-var(test.new$count)
+Mean <- mean(test.new$count)
+Variance <- var(test.new$count)
+```
 
-test.poisson <- glm(count ~ gender + sport + year, 
-                    family = poisson, data = test.new)
+```{r pois-reg, echo = T}
+test.poisson <- glm(count ~ gender + sport + year, family = poisson, data = test.new)
+```
 
+```{r overdispersion, fig.align = "center"}
 test.fitted <- fitted.values(test.poisson)
 test.resid <- residuals(test.poisson, type = "response")
 test.std.resid <- test.resid / sqrt(test.fitted)
-overdispersion <- sum(test.std.resid^2) / df.residual(test.poisson)
-overdispersion
+Overdispersion <- sum(test.std.resid^2) / df.residual(test.poisson)
+
+data.frame(Mean, Variance, Overdispersion)
 ```
+
+Here we have overdispersion value as `r Overdispersion`, which is over 1 but pretty close to 1. Thus, this poisson model with the data is arguably correct. Also, the poisson model does not allow variance to be adjusted independently of the mean.
+
+
 
 ##### (b)
 
@@ -117,4 +127,4 @@ ggplot(sport.co.df, aes(x = sports, y = estimate, ymin = lower, ymax = upper)) +
   coord_flip()
 ```
 
-
+We find that the estimate for gymnastics is the uniquely lowest (below the intercept 1). And the standard error of the gymnastics is 0.009 whereas the other sports have around 0.04.
