@@ -1,7 +1,7 @@
 ---
 title: "Small Project 2"
 author: "Syaza Senin, Eungkoo (Eugene) Kahng, Miriam Hu, Youngihn Kwon"
-date: "October 31, 2017"
+date: "November 3, 2017"
 output: html_document
 ---
 
@@ -9,7 +9,7 @@ output: html_document
 library(knitr)
 library(MASS)
 library(tidyverse)
-library(gridExtra)
+library(vcd)
 opts_chunk$set(echo = FALSE,
                cache = TRUE, autodep = TRUE,
                message = FALSE, warning = FALSE)
@@ -20,13 +20,96 @@ opts_chunk$set(echo = FALSE,
 ```{r data-loading}
 test <- read.table("http://www.stat.ufl.edu/~winner/data/concussion.dat")
 colnames(test) <- c("gender", "sport", "year", "concussion", "count")
-```
 
-```{r}
 con1 <- subset(test, concussion == 1)
 con2 <- subset(test, concussion == 0)
 con1$count0 <- con2$count
 con1$prop <- con1$count /  (con1$count + con1$count0)
-head(con1)
+con1$prop0 <- con1$count0 /  (con1$count + con1$count0)
 ```
+
+
+#### i)
+
+```{r logit-reg, fig.align = "center"}
+# Not sure, and add interaction maybe?
+test.logit <- glm(cbind(count, count0) ~ gender + sport + year, 
+             family = binomial(link='logit'), data = con1)
+
+test.logit.df <- con1
+test.logit.df$.fitted <- fitted.values(test.logit)
+test.logit.df$.resid <- residuals(test.logit, type = "response")
+ggplot(test.logit.df, aes(x = .fitted, y = .resid)) + geom_point() +
+  geom_smooth(method = "loess", method.args = list(degree = 1))
+
+test.fitted <- sort(fitted.values(test.logit)) - mean(fitted.values(test.logit))
+test.residuals <- sort(residuals(test.logit))
+n <- length(test.residuals)
+f.value <- (0.5:(n - 0.5)) / n
+test.fit <- data.frame(f.value, Fitted = test.fitted, Residuals = test.residuals)
+test.fit.long <- test.fit %>% gather(type, value, Fitted:Residuals)
+ggplot(test.fit.long, aes(x = f.value, y = value)) + geom_point() +
+  facet_wrap(~type) + ggtitle("Residual vs Fitted Graph")
+```
+
+
+#### ii)
+
+```{r error-rate}
+null.test.logit <- glm(cbind(count, count0) ~ 1, family = binomial(link='logit'),
+                       data = con1)
+```
+
+
+## Question 2
+
+#### i)
+
+```{r count-plots, fig.align = "center"}
+ggplot(test, aes(x = sport, y = count)) + geom_bar(stat = "identity") +
+  facet_wrap(~gender + year)
+
+test.table <- xtabs(count ~ gender + sport + year, data = test)
+mosaic(~gender + sport, test.table)
+mosaic(~year + sport, test.table)
+```
+
+
+#### ii)
+
+##### (a)
+
+```{r poisson, fig.align = "center"}
+test.poisson <- glm(count ~ gender + sport + year, 
+                    family = poisson, data = test)
+
+test.fitted <- fitted.values(test.poisson)
+test.resid <- residuals(test.poisson, type = "response")
+test.std.resid <- test.resid / sqrt(test.fitted)
+overdispersion <- sum(test.std.resid^2) / df.residual(test.poisson)
+overdispersion
+```
+
+##### (b)
+
+```{r refit, fig.align = "center"}
+test$sport <- relevel(test$sport, ref = "Lacrosse")
+test.poisson1 <- glm(count ~ sport + gender + year, family = poisson, data = test)
+
+coefficients(summary(test.poisson1))[1:7, 1:2]
+
+# Not sure about upper and lower calculation
+sport.co <- coefficients(summary(test.poisson1))[1:5, 1:2]
+sports <- c("Basketball", "Gymnastics", "Soccer", "Softball/Baseball")
+estimate <- exp(sport.co[2:5, 1])
+lower <- exp(sport.co[2:5, 1] - 4 * sport.co[2:5, 2])
+upper <- exp(sport.co[2:5, 1] + 4 * sport.co[2:5, 2])
+sport.co.df <- data.frame(sports, estimate, lower, upper)
+ggplot(sport.co.df, aes(x = sports, y = estimate, ymin = lower, ymax = upper)) + 
+  geom_pointrange() + geom_abline(intercept = 1, slope = 0, color = "red") + 
+  scale_y_continuous(breaks=seq(0, 10, 0.25)) + 
+  ggtitle("Approximate 95% confidence intervals for concussion count rates") +
+  coord_flip()
+```
+
 
