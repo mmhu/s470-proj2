@@ -26,14 +26,15 @@ con2 <- subset(test, concussion == 0)
 con1$count0 <- con2$count
 con1$prop <- con1$count /  (con1$count + con1$count0)
 con1$prop0 <- con1$count0 /  (con1$count + con1$count0)
+
+aggregate(count ~ concussion, test, sum)
 ```
 
 
 #### i)
 
 ```{r logit-reg, fig.align = "center"}
-# Not sure, and add interaction maybe?
-test.logit <- glm(cbind(count, count0) ~ gender + sport + year, 
+test.logit <- glm(cbind(count, count0) ~ gender + sport + factor(year), 
              family = binomial(link='logit'), data = con1)
 
 test.logit.df <- con1
@@ -80,8 +81,12 @@ mosaic(~year + sport, test.table)
 ##### (a)
 
 ```{r poisson, fig.align = "center"}
+test.new <- test[test$concussion == 1, ]
+mean(test.new$count)
+var(test.new$count)
+
 test.poisson <- glm(count ~ gender + sport + year, 
-                    family = poisson, data = test)
+                    family = poisson, data = test.new)
 
 test.fitted <- fitted.values(test.poisson)
 test.resid <- residuals(test.poisson, type = "response")
@@ -98,16 +103,16 @@ test.poisson1 <- glm(count ~ sport + gender + year, family = poisson, data = tes
 
 coefficients(summary(test.poisson1))[1:7, 1:2]
 
-# Not sure about upper and lower calculation
 sport.co <- coefficients(summary(test.poisson1))[1:5, 1:2]
 sports <- c("Basketball", "Gymnastics", "Soccer", "Softball/Baseball")
 estimate <- exp(sport.co[2:5, 1])
-lower <- exp(sport.co[2:5, 1] - 4 * sport.co[2:5, 2])
-upper <- exp(sport.co[2:5, 1] + 4 * sport.co[2:5, 2])
+a <- qpois(0.05, mean(test.new$count))
+lower <- exp(sport.co[2:5, 1] - a * sport.co[2:5, 2])
+upper <- exp(sport.co[2:5, 1] + a * sport.co[2:5, 2])
 sport.co.df <- data.frame(sports, estimate, lower, upper)
 ggplot(sport.co.df, aes(x = sports, y = estimate, ymin = lower, ymax = upper)) + 
   geom_pointrange() + geom_abline(intercept = 1, slope = 0, color = "red") + 
-  scale_y_continuous(breaks=seq(0, 10, 0.25)) + 
+  scale_y_continuous(breaks=seq(0, 6, 0.5)) + 
   ggtitle("Approximate 95% confidence intervals for concussion count rates") +
   coord_flip()
 ```
