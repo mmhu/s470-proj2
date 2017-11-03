@@ -123,8 +123,24 @@ sport.co.df <- data.frame(sports, estimate, lower, upper)
 ggplot(sport.co.df, aes(x = sports, y = estimate, ymin = lower, ymax = upper)) + 
   geom_pointrange() + geom_abline(intercept = 1, slope = 0, color = "red") + 
   scale_y_continuous(breaks=seq(0, 6, 0.5)) + 
-  ggtitle("Approximate 95% confidence intervals for concussion count rates") +
+  ggtitle("Approximate 95% confidence intervals for concussion count rates \n Lacrosse as baseline") +
   coord_flip()
+
+test$sport <- relevel(test$sport, ref = "Gymnastics")
+test.poisson1 <- glm(count ~ sport + gender + year, family = poisson, data = test)
+
+coefficients(summary(test.poisson1))[1:7, 1:2]
+
+sport.co <- coefficients(summary(test.poisson1))[1:5, 1:2]
+sports <- c("Basketball", "Lacrosse", "Soccer", "Softball/Baseball")
+estimate <- exp(sport.co[2:5, 1])
+a <- qpois(0.05, mean(test.new$count))
+lower <- exp(sport.co[2:5, 1] - a * sport.co[2:5, 2])
+upper <- exp(sport.co[2:5, 1] + a * sport.co[2:5, 2])
+sport.co.df <- data.frame(sports, estimate, lower, upper)
+ggplot(sport.co.df, aes(x = sports, y = estimate, ymin = lower, ymax = upper)) + 
+  geom_pointrange() + geom_abline(intercept = 1, slope = 0, color = "red")  + 
+  ggtitle("Approximate 95% confidence intervals for concussion count rates \n Gymnastics as baseline") + coord_flip()
 ```
 
-We find that the estimate for gymnastics is the uniquely lowest (below the intercept 1). And the standard error of the gymnastics is 0.009 whereas the other sports have around 0.04.
+We basically see When comparing the two cases where Lacrosse or Gynmastics is the baseline, we have a a better idea of ratio relative to the baseline to use Lacrosse rather than Gynmastics because it is clear to detect the 95% CI indicates narrower widths 
