@@ -54,7 +54,7 @@ ggplot(test.fit.long, aes(x = f.value, y = value)) + geom_point() +
   facet_wrap(~type) + ggtitle("Residual vs Fitted Graph")
 ```
 
-We are not adding any interaction because sports and gender interaction still gives you the straightish line for fitted plots. Plus, we believe sports themselves soley determine the injury issues no matter gender. In terms of the residual and fitted, the loess fitting is doing a good job capturing the residual pattern which does not seem to deviate much from 0.
+We are not adding any interaction because sports and gender interaction still gives you the straight-ish line for fitted plots, so the interaction term does not give us any additional information. In terms of the residual and fitted, the loess fitting is doing a good job capturing the residual pattern which does not seem to deviate much from 0.
 
 
 #### ii)
@@ -62,8 +62,14 @@ We are not adding any interaction because sports and gender interaction still gi
 ```{r error-rate}
 null.test.logit <- glm(cbind(count, count0) ~ 1, family = binomial(link='logit'),
                        data = con1)
+null.probs <- predict(null.test.logit, type = "response")
+test.probs <- predict(test.logit, type = "response")
+# this is wrong idk
 ```
 
+We get low error rates because the proportion of people who get concussions is extremely low. The counts for no concussion have magnitude $10^4$, while the counts for concussion are fewer than 100. So the denominator is large, making the error rate small. We cannot conclude that our model is useful just because of the low error rate. For example, if we predicted "no concussion" for every single subject, the error rate would still be low, but predicting no every time is obviously useless. We would need another measure (such as cross validation) to find out how useful the model is.
+
+Again, because the incidence of getting a concussion is so low in the first place, our error rate is low when we predict that most people will not get a concussion for the logistic model using our predictors and the null model. So, our model is not necessarily useless.
 
 ## Question 2
 
@@ -143,4 +149,4 @@ ggplot(sport.co.df, aes(x = sports, y = estimate, ymin = lower, ymax = upper)) +
   ggtitle("Approximate 95% confidence intervals for concussion count rates \n Gymnastics as baseline") + coord_flip()
 ```
 
-We basically see When comparing the two cases where Lacrosse or Gynmastics is the baseline, we have a a better idea of ratio relative to the baseline to use Lacrosse rather than Gynmastics because it is clear to detect the 95% CI indicates narrower widths 
+We basically see When comparing the two cases where lacrosse or gymnastics is the baseline, we have a a better idea of ratio relative to the baseline to use lacrosse rather than gymnastics because it is clear to detect the 95% CI indicates narrower widths.
