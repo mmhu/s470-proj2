@@ -3,8 +3,7 @@ title: "Small Project 2"
 author: "Syaza Senin, Eungkoo (Eugene) Kahng, Miriam Hu, Youngihn Kwon"
 date: "November 3, 2017"
 output:
-  word_document: default
-  html_document: default
+  pdf_document: default
 ---
 
 ```{r, include=FALSE}
@@ -55,7 +54,7 @@ ggplot(test.fit.long, aes(x = f.value, y = value)) + geom_point() +
   facet_wrap(~type) + ggtitle("Residual vs Fitted Graph")
 ```
 
-We are not adding any interaction because sports and gender interaction still gives you the straight-ish line for fitted plots, so the interaction term does not give us any additional information. In terms of the residual and fitted, the loess fitting is doing a good job capturing the residual pattern which does not seem to deviate much from 0.
+We are not adding any interaction because sports and gender interaction still gives you the straight-ish line for fitted plots, so the interaction term does not give us any additional information. In terms of the residual and fitted, the loess fitting is doing a good job capturing the residual pattern, which does not seem to deviate much from 0.
 
 
 #### ii)
@@ -70,9 +69,9 @@ error.rate.fitted = mean(test.probs)
 cbind(error.rate.null, error.rate.fitted)
 ```
 
-a). Each error rate of our fitted model was below 0.05 and the mean of error rate from our fitted model was 0.0008055234. We get low error rates because the proportion of people who get concussions is extremely low. The counts for no concussion have magnitude $10^4$, while the counts for concussion are fewer than 100. So the denominator is large, making the error rate small. We cannot conclude that our model is useful just because of the low error rate. For example, if we predicted "no concussion" for every single subject, the error rate would still be low, but predicting no every time is obviously useless. We would need another measure (such as cross validation) to find out how useful the model is.
+a). Each error rate of our fitted model was below 0.05 and the mean of error rate from our fitted model was 0.000806. We get low error rates because the proportion of people who get concussions is extremely low. The counts for no concussion have magnitude $10^4$, while the counts for concussion are fewer than 100. So the denominator is large, making the error rate small. We cannot conclude that our model is useful just because of the low error rate. For example, if we predicted "no concussion" for every single subject, the error rate would still be low, but predicting no every time is obviously useless. We would need another measure (such as cross validation) to find out how useful the model is.
 
-b). The mean of error rate from our fitted model was 0.0008055234 and the mean of error rate from null model was 0.0007464154. Both error rate was close to zero and the error rate from two models was equal as 0.0008. Again, because the incidence of getting a concussion is so low in the first place, our error rate is low when we predict that most people will not get a concussion for the logistic model using our predictors and the null model. So, our model is not necessarily useless.
+b). The mean of error rate from our fitted model was 0.000806 and the mean of error rate from null model was 0.000746. Both error rate was close to zero and the error rate from two models was equal as 0.0008. Again, because the incidence of getting a concussion is so low in the first place, our error rate is low when we predict that most people will not get a concussion for the logistic model using our predictors and the null model. So, our model is not necessarily useless.
 
 ## Question 2
 
@@ -110,9 +109,7 @@ Overdispersion <- sum(test.std.resid^2) / df.residual(test.poisson)
 data.frame(Mean, Variance, Overdispersion)
 ```
 
-Here we have overdispersion value as `r Overdispersion`, which is over 1 but pretty close to 1. Thus, this poisson model with the data is arguably correct. Also, the poisson model does not allow variance to be adjusted independently of the mean.
-
-
+Here we have overdispersion value as `r Overdispersion`, which is over 1 but pretty close to 1. Thus, this Poisson model with the data is arguably correct. Also, the Poisson model does not allow variance to be different from the mean.
 
 ##### (b)
 
@@ -132,7 +129,7 @@ sport.co.df <- data.frame(sports, estimate, lower, upper)
 ggplot(sport.co.df, aes(x = sports, y = estimate, ymin = lower, ymax = upper)) + 
   geom_pointrange() + geom_abline(intercept = 1, slope = 0, color = "red") + 
   scale_y_continuous(breaks=seq(0, 6, 0.5)) + 
-  ggtitle("Approximate 95% confidence intervals for concussion count rates \n Lacrosse as baseline") +
+  ggtitle("Approximate 95% confidence intervals for concussion count rates \n lacrosse as baseline") +
   coord_flip()
 
 test$sport <- relevel(test$sport, ref = "Gymnastics")
@@ -149,7 +146,7 @@ upper <- exp(sport.co[2:5, 1] + a * sport.co[2:5, 2])
 sport.co.df <- data.frame(sports, estimate, lower, upper)
 ggplot(sport.co.df, aes(x = sports, y = estimate, ymin = lower, ymax = upper)) + 
   geom_pointrange() + geom_abline(intercept = 1, slope = 0, color = "red")  + 
-  ggtitle("Approximate 95% confidence intervals for concussion count rates \n Gymnastics as baseline") + coord_flip()
+  ggtitle("Approximate 95% confidence intervals for concussion count rates \n gymnastics as baseline") + coord_flip()
 ```
 
 We basically see When comparing the two cases where lacrosse or gymnastics is the baseline, we have a a better idea of ratio relative to the baseline to use lacrosse rather than gymnastics because it is clear to detect the 95% CI indicates narrower widths.
