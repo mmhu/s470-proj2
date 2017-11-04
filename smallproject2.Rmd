@@ -2,7 +2,9 @@
 title: "Small Project 2"
 author: "Syaza Senin, Eungkoo (Eugene) Kahng, Miriam Hu, Youngihn Kwon"
 date: "November 3, 2017"
-output: html_document
+output:
+  word_document: default
+  html_document: default
 ---
 
 ```{r, include=FALSE}
@@ -26,7 +28,6 @@ con1 <- subset(test, concussion == 1)
 con2 <- subset(test, concussion == 0)
 con1$count0 <- con2$count
 con1$prop <- con1$count /  (con1$count + con1$count0)
-
 total.count <- aggregate(count ~ concussion, test, sum)
 ```
 
@@ -64,12 +65,14 @@ null.test.logit <- glm(cbind(count, count0) ~ 1, family = binomial(link='logit')
                        data = con1)
 null.probs <- predict(null.test.logit, type = "response")
 test.probs <- predict(test.logit, type = "response")
-# this is wrong idk
+error.rate.null = mean(null.probs)
+error.rate.fitted = mean(test.probs)
+cbind(error.rate.null, error.rate.fitted)
 ```
 
-We get low error rates because the proportion of people who get concussions is extremely low. The counts for no concussion have magnitude $10^4$, while the counts for concussion are fewer than 100. So the denominator is large, making the error rate small. We cannot conclude that our model is useful just because of the low error rate. For example, if we predicted "no concussion" for every single subject, the error rate would still be low, but predicting no every time is obviously useless. We would need another measure (such as cross validation) to find out how useful the model is.
+a). Each error rate of our fitted model was below 0.05 and the mean of error rate from our fitted model was 0.0008055234. We get low error rates because the proportion of people who get concussions is extremely low. The counts for no concussion have magnitude $10^4$, while the counts for concussion are fewer than 100. So the denominator is large, making the error rate small. We cannot conclude that our model is useful just because of the low error rate. For example, if we predicted "no concussion" for every single subject, the error rate would still be low, but predicting no every time is obviously useless. We would need another measure (such as cross validation) to find out how useful the model is.
 
-Again, because the incidence of getting a concussion is so low in the first place, our error rate is low when we predict that most people will not get a concussion for the logistic model using our predictors and the null model. So, our model is not necessarily useless.
+b). The mean of error rate from our fitted model was 0.0008055234 and the mean of error rate from null model was 0.0007464154. Both error rate was close to zero and the error rate from two models was equal as 0.0008. Again, because the incidence of getting a concussion is so low in the first place, our error rate is low when we predict that most people will not get a concussion for the logistic model using our predictors and the null model. So, our model is not necessarily useless.
 
 ## Question 2
 
